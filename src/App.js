@@ -1,4 +1,3 @@
-import "./styles.css";
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 
@@ -9,7 +8,7 @@ export default function App() {
 
   useEffect(() => {
     const token =
-      "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJwcm9rcmF5YSIsInN1YiI6InN1cHBsaWVydXNlcjhAZ21haWwuY29tfnFhLnByb2tyYXlhLmNvbSIsImF1ZCI6IndlYiIsImlhdCI6MTcyMDA2NjIxOSwiZXhwIjoxNzIwMDc1MjE5fQ.z81ynk27ff9OA_XhoR2WB9CeOhFiP73GBPxfe8rWNAjb9qy2EycOVk_y7bgfIRLjVYjjQCVg4lm1x936I06n9Q";
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZWNpcGllbnQiOiIrOTExMTAwMDAwMDExIiwiYm9keSI6IllvdXIgdmVyaWZpY2F0aW9uIGNvZGUgaXM6IDEyMzQ1Iiwic2VuZGVyIjoiKzkxMTEwMDAwMDAxMSIsImlhdCI6MTcyMDE5MDA0OCwiZXhwIjoxNzIwMTkwMTA4fQ.kUJoVFr9hIspF1gdEIKA-km1KctQvrBGJ-rRdBVqBvo";
     const decoded = jwtDecode(token);
     const expirationDate = new Date(decoded.exp * 1000);
     fetch("https://worldtimeapi.org/api/timezone/utc")
@@ -26,17 +25,37 @@ export default function App() {
 
   useEffect(() => {
     let interval;
-    if (startSession) {
+    let timeInterval;
+    let showAlert = true;
+    if (startSession && currentTime) {
       interval = setInterval(() => {
-        if (sessionTime <= currentTime) {
-          console.log("hello");
+        if (sessionTime < currentTime && showAlert === true) {
+          showAlert = false;
+          alert('Session Timed out');
+        } else if (showAlert === false) {
+          clearInterval(interval);
         }
       }, 2000);
+      if (showAlert === true) {
+        timeInterval = setInterval(() => {
+          fetch("https://worldtimeapi.org/api/timezone/utc")
+            .then((response) => response.json())
+            .then((data) => {
+              setCurrentTime(data.utc_datetime);
+            })
+            .catch((error) => {
+              console.error("Error fetching time from the API:", error);
+            });
+        }, 20000);
+      } else {
+        clearInterval(timeInterval);
+      }
     }
     () => {
       clearInterval(interval);
+      clearInterval(timeInterval)
     };
-  }, []);
+  }, [startSession, currentTime]);
 
   return (
     <div>
